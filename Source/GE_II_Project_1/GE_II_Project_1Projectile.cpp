@@ -18,11 +18,7 @@ AGE_II_Project_1Projectile::AGE_II_Project_1Projectile()
 	{
 		Mirror = Mirror1.Class;
 	}
-	static ConstructorHelpers::FClassFinder<AActor>PortalBP(TEXT("/Game/FirstPerson/Blueprints/BP_Portals"));
-	if (PortalBP.Class != NULL)
-	{
-		Portal = PortalBP.Class;
-	}
+
 
 	// Players can't walk on it
 	CollisionComp->SetWalkableSlopeOverride(FWalkableSlopeOverride(WalkableSlope_Unwalkable, 0.f));

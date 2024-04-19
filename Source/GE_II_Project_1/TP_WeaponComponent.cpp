@@ -13,6 +13,9 @@
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
 {
+	// Default offset from the character location for projectiles to spawn
+	MuzzleOffset = FVector(100.0f, 0.0f, 10.0f);
+
 	static ConstructorHelpers::FClassFinder<AGE_II_Project_1Projectile>ProjectileO(TEXT("/Game/FirstPerson/Blueprints/Projectile_Orange"));
 	if (ProjectileO.Class != NULL)
 	{
@@ -39,25 +42,26 @@ void UTP_WeaponComponent::FireRight()
 
 void UTP_WeaponComponent::Fire()
 {
-	if (Character == nullptr || Character->GetController() == nullptr)
-	{
-		return;
-	}
-
-	// Try and fire a projectile
-	if (ProjectileBlue != nullptr && ProjectileOrange != nullptr)
-	{
-		UWorld* const World = GetWorld();
-		if (World != nullptr)
+		if (Character == nullptr || Character->GetController() == nullptr)
 		{
-			APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
-			const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
-	
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+			return;
+		}
+
+		// Try and fire a projectile
+		if (ProjectileOrange != nullptr && ProjectileBlue != nullptr)
+		{
+			UWorld* const World = GetWorld();
+			if (World != nullptr)
+			{
+				APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
+				const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
+				// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+				const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+
+				//Set Spawn Collision Handling Override
+				FActorSpawnParameters ActorSpawnParams;
+				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
 	
 			if (IsLeftProjectile)
 			{
@@ -69,7 +73,7 @@ void UTP_WeaponComponent::Fire()
 				World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
 			}
 		}
-	}
+}
 	
 	// Try and play the sound if specified
 	if (FireSound != nullptr)

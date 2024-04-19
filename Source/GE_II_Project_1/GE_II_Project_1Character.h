@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "BPI_Jump_Portals.h"
 #include "GE_II_Project_1Character.generated.h"
 
 class UInputComponent;
@@ -17,7 +18,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AGE_II_Project_1Character : public ACharacter
+class AGE_II_Project_1Character : public ACharacter, public IBPI_Jump_Portals
 {
 	GENERATED_BODY()
 
@@ -64,6 +65,11 @@ public:
 	/** Getter for the bool */
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	bool GetHasRifle();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float Jump_Velocity;
+
+	void JumpPortal_Implementation(FVector Target_Location, FRotator TargetRotation) override;
 
 protected:
 	/** Called for movement input */

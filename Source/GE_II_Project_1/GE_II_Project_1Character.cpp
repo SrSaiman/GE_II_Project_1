@@ -9,6 +9,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/SkeletalMesh.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Engine/LocalPlayer.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -116,4 +120,14 @@ void AGE_II_Project_1Character::SetHasRifle(bool bNewHasRifle)
 bool AGE_II_Project_1Character::GetHasRifle()
 {
 	return bHasRifle;
+}
+
+void AGE_II_Project_1Character::JumpPortal_Implementation(FVector Target_Location, FRotator TargetRotation)
+{
+	Jump_Velocity = UKismetMathLibrary::VSize(FVector(GetVelocity()));
+	SetActorLocationAndRotation(FVector (Target_Location), FRotator(TargetRotation));
+	//GetController()->SetControlRotation(FRotator(TargetRotation));
+	GetCharacterMovement()->Velocity = GetActorForwardVector()*Jump_Velocity;
+	SetActorRotation(FRotator(0.f, GetActorRotation().Yaw, 0.f));
+
 }
