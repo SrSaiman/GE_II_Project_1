@@ -39,10 +39,12 @@ public:
 	UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class AActor> Mirror;
+	class UTP_WeaponComponent* Weapon;
 
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class AActor> Portal;
+	bool BlueProjectile;
+
+	UFUNCTION()
+	void GetGun(bool IsBlueProjectile, UTP_WeaponComponent* gunReference);
 	
 };
 

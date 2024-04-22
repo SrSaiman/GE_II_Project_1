@@ -6,14 +6,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
+#include "UObject/NoExportTypes.h"
+#include "Components/TimelineComponent.h"
 #include "GE_II_Project_1Portals.generated.h"
 
 UCLASS()
 class GE_II_PROJECT_1_API AGE_II_Project_1Portals : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AGE_II_Project_1Portals();
 
@@ -21,13 +23,25 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	//-------------------------------------------------------------------------------
 
 public:
+
+	UPROPERTY(EditAnywhere, Category = Timeline)
+	UCurveFloat* ScaleCurve;
+
+	UPROPERTY()
+	FTimeline MyTimeline;
+
+	UFUNCTION()
+	void TimelineFloatReturn(float Value);
+
+	bool IsOrangePortal;
 
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
 	UBoxComponent* Trigger_NotCollided = nullptr;
@@ -56,6 +70,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	USceneCaptureComponent2D* Camera_Portal_Orange;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* LookAt_Blue;
+
 	//Portal 2
 	//-------------------------------------------------------------------------------
 
@@ -78,7 +95,12 @@ public:
 	USceneCaptureComponent2D* Camera_Portal_Blue;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* LookAt_Orange;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	APlayerCameraManager* PlayerCamera;
+
+
 
 	//-------------------------------------------------------------------------------
 
@@ -90,4 +112,13 @@ public:
 	void OnEndOverlapBlue(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	UFUNCTION()
 	void OnEndOverlapOrange(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void IsBlue(FRotator SpawnRotation, FVector  SpawnLocation);
+
+	UFUNCTION()
+	void IsOrange(FRotator SpawnRotation,FVector  SpawnLocation);
+
+	UFUNCTION(BlueprintCallable)
+	void StartFromBegin();
 };

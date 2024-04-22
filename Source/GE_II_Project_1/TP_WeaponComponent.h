@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "TP_WeaponComponent.generated.h"
 
@@ -18,9 +19,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AGE_II_Project_1Projectile> ProjectileBlue;
 
-	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AGE_II_Project_1Projectile> ProjectileOrange;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class AGE_II_Project_1Portals* Portals_Reference;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AGE_II_Project_1Portals> Portals;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	//class UPhysicalMaterial* Portal_Supporting;
 
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
@@ -62,6 +71,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void FireRight();
 
+	UFUNCTION(BlueprintCallable)
+	void SpawnPortal(bool IsOrangeProjetile, FRotator SpawnRotationPortal, FVector SpawnLocationPortal);
+
+	void MoveTo(FVector TargetLocation, FVector InitialLocation , float Duration);
+
+private:
+	// Variables to store movement parameters
+	float MoveTime;
+	float StartTime;
+
+
 protected:
 	/** Ends gameplay for this component. */
 	UFUNCTION()
@@ -69,6 +89,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile)
 	bool IsLeftProjectile;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile)
+	bool SpawnFirstTimePortals = true;
 
 private:
 	/** The Character holding this weapon*/

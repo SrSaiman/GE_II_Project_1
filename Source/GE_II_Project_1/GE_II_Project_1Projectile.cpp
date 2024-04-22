@@ -3,6 +3,7 @@
 #include "GE_II_Project_1Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
+#include "TP_WeaponComponent.h"
 
 AGE_II_Project_1Projectile::AGE_II_Project_1Projectile() 
 {
@@ -11,13 +12,6 @@ AGE_II_Project_1Projectile::AGE_II_Project_1Projectile()
 	CollisionComp->InitSphereRadius(20.0f);
 	CollisionComp->BodyInstance.SetCollisionProfileName("Projectile");
 	CollisionComp->OnComponentHit.AddDynamic(this, &AGE_II_Project_1Projectile::OnHit);		// set up a notification for when this component hits something blocking
-
-
-	static ConstructorHelpers::FClassFinder<AActor>Mirror1(TEXT("/Game/FirstPerson/Blueprints/NewBlueprint"));
-	if (Mirror1.Class != NULL)
-	{
-		Mirror = Mirror1.Class;
-	}
 
 
 	// Players can't walk on it
@@ -46,25 +40,20 @@ AGE_II_Project_1Projectile::AGE_II_Project_1Projectile()
 
 }
 
+
 void AGE_II_Project_1Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	UWorld* const World = GetWorld();
-	// Only add impulse and destroy projectile if we hit a physics
-	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr) && OtherComp->IsSimulatingPhysics())
-	{
-		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
+	FVector ImpactNormalPortal = Hit.ImpactNormal;
+	FRotator SpawnRotationPortal_ = ImpactNormalPortal.Rotation();
+	FVector SpawnLocationPortal_ = Hit.ImpactPoint + (Hit.ImpactNormal * FVector(0.01f, 0.01f, 0.01f));
+		Weapon->SpawnPortal(BlueProjectile, SpawnRotationPortal_, SpawnLocationPortal_);
+		UE_LOG(LogTemp, Warning, TEXT("Weapon não foi inicializado corretamente."));
 
-		Destroy();
-	}
-	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherActor->ActorHasTag(TEXT("Can_Collide"))))
-	{
-		FVector ImpactNormal = Hit.ImpactNormal;
+	Destroy();
+}
 
-		const FRotator SpawnRotation = ImpactNormal.Rotation();
-
-		const FVector SpawnLocation = Hit.ImpactPoint;
-
-		World->SpawnActor<AActor>(Mirror, SpawnLocation, SpawnRotation);
-		Destroy();
-	}
+void AGE_II_Project_1Projectile::GetGun(bool IsBlueProjectile, UTP_WeaponComponent* gunReference)
+{
+	Weapon = gunReference;
+	BlueProjectile = IsBlueProjectile;
 }

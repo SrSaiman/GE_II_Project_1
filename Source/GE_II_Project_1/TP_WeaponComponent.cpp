@@ -7,8 +7,10 @@
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GE_II_Project_1Portals.h"
 
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
@@ -26,6 +28,15 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 	{
 		ProjectileBlue = ProjectileB.Class;
 	}
+
+	static ConstructorHelpers::FClassFinder<AGE_II_Project_1Portals>Portals_(TEXT("/Game/MyGE_II_Project_1Portals"));
+	if (Portals_.Class != NULL)
+	{
+		Portals = Portals_.Class;
+	}
+
+	SpawnFirstTimePortals = true;
+	MoveTime = 0.2f;
 }
 
 void UTP_WeaponComponent::FireLeft()
@@ -60,20 +71,33 @@ void UTP_WeaponComponent::Fire()
 
 				//Set Spawn Collision Handling Override
 				FActorSpawnParameters ActorSpawnParams;
+
+				if (SpawnFirstTimePortals)
+				{
+					Portals_Reference = World->SpawnActor<AGE_II_Project_1Portals>(Portals, SpawnLocation, SpawnRotation, ActorSpawnParams);
+					SpawnFirstTimePortals = false;
+				}
+
 				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
-	
-			if (IsLeftProjectile)
-			{
-				World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileBlue, SpawnLocation, SpawnRotation, ActorSpawnParams);
-
-			}
-			if (IsLeftProjectile == false)
-			{
-				World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
-			}
+				FHitResult HitResult;
+				FCollisionQueryParams TraceParams(FName(TEXT("Trace")), true, GetOwner());
+				FVector EndLocation = SpawnLocation + SpawnRotation.Vector() * 5000;;
+				GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECC_WorldStatic, TraceParams);
+				DrawDebugLine(GetWorld(), SpawnLocation, EndLocation, FColor::Red, true, 5.f, 0, 1.0f);
+			
+				if (IsLeftProjectile)
+				{
+					AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileBlue, SpawnLocation, SpawnRotation, ActorSpawnParams);
+					BULLET->GetGun(IsLeftProjectile,this);
+				}
+				if (IsLeftProjectile == false)
+				{
+					AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
+					BULLET->GetGun(IsLeftProjectile, this);
+				}
 		}
-}
+	}
 	
 	// Try and play the sound if specified
 	if (FireSound != nullptr)
@@ -140,6 +164,25 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->RemoveMappingContext(FireMappingContext);
+		}
+	}
+}
+
+void UTP_WeaponComponent::SpawnPortal(bool IsBlueProjectile, FRotator SpawnRotationPortal, FVector SpawnLocationPortal)
+{
+	if (IsBlueProjectile)
+	{
+		if (Portals_Reference)
+		{
+			Portals_Reference->IsBlue(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
+		}
+
+	}
+	if (IsBlueProjectile == false)
+	{
+		if (Portals_Reference)
+		{
+			Portals_Reference->IsOrange(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 		}
 	}
 }
