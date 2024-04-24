@@ -10,6 +10,7 @@
 #include "BPI_Jump_Portals.h"
 #include "GE_II_Project_1Character.h"
 #include "UObject/NoExportTypes.h"
+#include "Curves/CurveFloat.h"
 #include "Components/TimelineComponent.h"
 
 // Sets default values
@@ -74,27 +75,12 @@ AGE_II_Project_1Portals::AGE_II_Project_1Portals()
 
 	Trigger_Orange->OnComponentBeginOverlap.AddDynamic(this, &AGE_II_Project_1Portals::OnBeginOverlapOrange);
 	Trigger_Orange->OnComponentEndOverlap.AddDynamic(this, &AGE_II_Project_1Portals::OnEndOverlapOrange);
-
-	// Inicialize a curva de float da escala
-	ScaleCurve = NewObject<UCurveFloat>();
-
-	// Adicione os pontos-chave à curva
-	if (ScaleCurve)
-	{
-		// Adicione os pontos-chave à curva
-		ScaleCurve->FloatCurve.AddKey(0.0f, 0.1f); 
-		ScaleCurve->FloatCurve.AddKey(0.3f, 1.0f); 
-	}
 }
 
 // Called when the game starts or when spawned
 void AGE_II_Project_1Portals::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Vincular a função de callback à timeline
-	FOnTimelineFloat TimelineCallback;
-	TimelineCallback.BindUFunction(this, FName("TimelineFloatReturn"));
 
 	// Check if World is valid before accessing it
 	if (UWorld* World = GetWorld())
@@ -133,36 +119,10 @@ void AGE_II_Project_1Portals::Tick(float DeltaTime)
 	Portal_Scene_Orange->SetWorldLocation(FVector(PlayerCamera->GetCameraLocation()));
 
 	Camera_Portal_Blue->SetRelativeLocation(FVector(Portal_Scene_Blue->GetRelativeLocation()));
-	
-	//FVector CurrentLocation = Camera_Portal_Blue->GetRelativeLocation(); // ou GetRelativeLocation se você estiver usando coordenadas locais
-	//float LookZCoordenate = CurrentLocation.Z;
-	//if (LookZCoordenate <= -75)
-	//{
-	//	LookZCoordenate = -75;
-	//}
-	//if (LookZCoordenate >= 75)
-	//{
-	//	LookZCoordenate = 75;
-	//}
-
-	//LookAt_Orange->SetRelativeLocation(FVector(0,0, LookZCoordenate));
 	Camera_Portal_Blue->SetWorldRotation(FRotator(UKismetMathLibrary::FindLookAtRotation(Camera_Portal_Blue->GetComponentLocation(), LookAt_Orange->GetComponentLocation())));
 	Camera_Portal_Blue->FOVAngle = UKismetMathLibrary::Clamp(UKismetMathLibrary::DegAtan(200.f/ UKismetMathLibrary::Max(UKismetMathLibrary::VSize(FVector(Camera_Portal_Blue->GetRelativeLocation())), 1.f)), 5.0f, 100.0f);
 
 	Camera_Portal_Orange->SetRelativeLocation(FVector(Portal_Scene_Orange->GetRelativeLocation()));
-
-	//CurrentLocation = Camera_Portal_Orange->GetRelativeLocation(); // ou GetRelativeLocation se você estiver usando coordenadas locais
-	//LookZCoordenate = CurrentLocation.Z;
-	//if (LookZCoordenate <= -75)
-	//{
-	//	LookZCoordenate = -75;
-	//}
-	//if (LookZCoordenate >= 75)
-	//{
-	//	LookZCoordenate = 75;
-	//}
-
-	//LookAt_Blue->SetRelativeLocation(FVector(0, 0, LookZCoordenate));
 	Camera_Portal_Orange->SetWorldRotation(FRotator(UKismetMathLibrary::FindLookAtRotation(Camera_Portal_Orange->GetComponentLocation(), LookAt_Blue->GetComponentLocation())));
 	Camera_Portal_Orange->FOVAngle = UKismetMathLibrary::Clamp(UKismetMathLibrary::DegAtan(200.f / UKismetMathLibrary::Max(UKismetMathLibrary::VSize(FVector(Camera_Portal_Orange->GetRelativeLocation())), 1.f)), 5.0f, 100.0f);
 }
@@ -214,37 +174,9 @@ void AGE_II_Project_1Portals::IsBlue(FRotator SpawnRotation, FVector  SpawnLocat
 {
 	IsOrangePortal = false;
 	Portal_Blue->SetWorldLocationAndRotation(SpawnLocation, SpawnRotation);
-	Portal_Blue->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
-	StartFromBegin();
 }
 void AGE_II_Project_1Portals::IsOrange(FRotator SpawnRotation, FVector  SpawnLocation)
 {
 	IsOrangePortal = true;
 	Portal_Orange->SetWorldLocationAndRotation(SpawnLocation, SpawnRotation);
-	Portal_Orange->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
-	StartFromBegin();
-}
-
-void AGE_II_Project_1Portals::StartFromBegin()
-{
-		// Configure a timeline
-		MyTimeline.SetLooping(false);
-		MyTimeline.SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
-
-		// Inicie a timeline
-		MyTimeline.PlayFromStart();
-}
-
-
-void AGE_II_Project_1Portals::TimelineFloatReturn(float Value)
-{
-	FVector NewScale = FVector(Value);
-	if (IsOrangePortal)
-	{
-		Portal_Orange->SetRelativeScale3D(FVector(Value, Value, Value));
-	}
-	else
-	{
-		Portal_Blue->SetRelativeScale3D(FVector(Value, Value, Value));
-	}
 }

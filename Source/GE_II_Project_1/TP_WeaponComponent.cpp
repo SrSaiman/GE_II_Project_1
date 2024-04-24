@@ -12,6 +12,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "GE_II_Project_1Portals.h"
 
+#define COLLISION_VIEWABLE ECC_GameTraceChannel2
+
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
 {
@@ -72,30 +74,43 @@ void UTP_WeaponComponent::Fire()
 				//Set Spawn Collision Handling Override
 				FActorSpawnParameters ActorSpawnParams;
 
-				if (SpawnFirstTimePortals)
-				{
-					Portals_Reference = World->SpawnActor<AGE_II_Project_1Portals>(Portals, SpawnLocation, SpawnRotation, ActorSpawnParams);
-					SpawnFirstTimePortals = false;
-				}
-
-				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
 				FHitResult HitResult;
 				FCollisionQueryParams TraceParams(FName(TEXT("Trace")), true, GetOwner());
 				FVector EndLocation = SpawnLocation + SpawnRotation.Vector() * 5000;;
-				GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECC_WorldStatic, TraceParams);
-				DrawDebugLine(GetWorld(), SpawnLocation, EndLocation, FColor::Red, true, 5.f, 0, 1.0f);
-			
-				if (IsLeftProjectile)
+
+				if (GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, TraceParams))
 				{
-					AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileBlue, SpawnLocation, SpawnRotation, ActorSpawnParams);
-					BULLET->GetGun(IsLeftProjectile,this);
+
 				}
-				if (IsLeftProjectile == false)
+				else
 				{
-					AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
-					BULLET->GetGun(IsLeftProjectile, this);
+					if (GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel2, TraceParams))
+					{
+
+						if (SpawnFirstTimePortals)
+						{
+							Portals_Reference = World->SpawnActor<AGE_II_Project_1Portals>(Portals, SpawnLocation, SpawnRotation, ActorSpawnParams);
+							SpawnFirstTimePortals = false;
+						}
+
+						ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+
+						DrawDebugLine(GetWorld(), SpawnLocation, EndLocation, FColor::Red, true, 5.f, 0, 1.0f);
+
+						if (IsLeftProjectile)
+						{
+							AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileBlue, SpawnLocation, SpawnRotation, ActorSpawnParams);
+							BULLET->GetGun(IsLeftProjectile, this);
+						}
+						if (IsLeftProjectile == false)
+						{
+							AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
+							BULLET->GetGun(IsLeftProjectile, this);
+						}
+					}
 				}
+
 		}
 	}
 	

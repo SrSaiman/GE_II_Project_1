@@ -32,14 +32,7 @@ public:
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = Timeline)
-	UCurveFloat* ScaleCurve;
 
-	UPROPERTY()
-	FTimeline MyTimeline;
-
-	UFUNCTION()
-	void TimelineFloatReturn(float Value);
 
 	bool IsOrangePortal;
 
@@ -119,6 +112,4 @@ public:
 	UFUNCTION()
 	void IsOrange(FRotator SpawnRotation,FVector  SpawnLocation);
 
-	UFUNCTION(BlueprintCallable)
-	void StartFromBegin();
 };
