@@ -23,13 +23,16 @@ public:
 	TSubclassOf<class AGE_II_Project_1Projectile> ProjectileOrange;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class AGE_II_Project_1Portals* Portals_Reference;
+	class AGE_II_Project_1Portal* Portal_Reference_Blue;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class AGE_II_Project_1Portal* Portal_Reference_Orange = nullptr;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class AGE_II_Project_1Portals> Portals;
+	TSubclassOf<class AGE_II_Project_1Portal> Portal_Blue;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	//class UPhysicalMaterial* Portal_Supporting;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AGE_II_Project_1Portal> Portal_Orange;
 
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
@@ -71,15 +74,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void FireRight();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void SpawnPortal(bool IsOrangeProjetile, FRotator SpawnRotationPortal, FVector SpawnLocationPortal);
-
-	void MoveTo(FVector TargetLocation, FVector InitialLocation , float Duration);
-
-private:
-	// Variables to store movement parameters
-	float MoveTime;
-	float StartTime;
 
 
 protected:
@@ -91,7 +87,12 @@ protected:
 	bool IsLeftProjectile;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile)
-	bool SpawnFirstTimePortals = true;
+	bool SpawnFirstTimePortalBlue = true;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile)
+	bool SpawnFirstTimePortalOrange = true;
+
+	bool portalsAreLinked = false;
 
 private:
 	/** The Character holding this weapon*/

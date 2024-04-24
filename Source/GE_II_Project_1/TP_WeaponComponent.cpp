@@ -10,7 +10,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "GE_II_Project_1Portals.h"
+#include "GE_II_Project_1Portal.h"
 
 #define COLLISION_VIEWABLE ECC_GameTraceChannel2
 
@@ -31,14 +31,17 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 		ProjectileBlue = ProjectileB.Class;
 	}
 
-	static ConstructorHelpers::FClassFinder<AGE_II_Project_1Portals>Portals_(TEXT("/Game/MyGE_II_Project_1Portals"));
-	if (Portals_.Class != NULL)
+	static ConstructorHelpers::FClassFinder<AGE_II_Project_1Portal>Portals_Blue_(TEXT("/Game/MyGE_II_Project_1Portal_Blue"));
+	if (Portals_Blue_.Class != NULL)
 	{
-		Portals = Portals_.Class;
+		Portal_Blue = Portals_Blue_.Class;
 	}
 
-	SpawnFirstTimePortals = true;
-	MoveTime = 0.2f;
+	static ConstructorHelpers::FClassFinder<AGE_II_Project_1Portal>Portals_Orange_(TEXT("/Game/MyGE_II_Project_1Portal_Orange"));
+	if (Portals_Orange_.Class != NULL)
+	{
+		Portal_Orange = Portals_Orange_.Class;
+	}
 }
 
 void UTP_WeaponComponent::FireLeft()
@@ -78,20 +81,8 @@ void UTP_WeaponComponent::Fire()
 				FCollisionQueryParams TraceParams(FName(TEXT("Trace")), true, GetOwner());
 				FVector EndLocation = SpawnLocation + SpawnRotation.Vector() * 5000;;
 
-				if (GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, TraceParams))
-				{
-
-				}
-				else
-				{
 					if (GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel2, TraceParams))
 					{
-
-						if (SpawnFirstTimePortals)
-						{
-							Portals_Reference = World->SpawnActor<AGE_II_Project_1Portals>(Portals, SpawnLocation, SpawnRotation, ActorSpawnParams);
-							SpawnFirstTimePortals = false;
-						}
 
 						ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
@@ -108,7 +99,6 @@ void UTP_WeaponComponent::Fire()
 							AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
 							BULLET->GetGun(IsLeftProjectile, this);
 						}
-					}
 				}
 
 		}
@@ -187,17 +177,34 @@ void UTP_WeaponComponent::SpawnPortal(bool IsBlueProjectile, FRotator SpawnRotat
 {
 	if (IsBlueProjectile)
 	{
-		if (Portals_Reference)
+		if (Portal_Reference_Blue)
 		{
-			Portals_Reference->IsBlue(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
+			Portal_Reference_Blue->Change_Location(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 		}
-
+		if (SpawnFirstTimePortalBlue)
+		{
+			UWorld* const World = GetWorld();
+			Portal_Reference_Blue = World->SpawnActor<AGE_II_Project_1Portal>(Portal_Blue, SpawnLocationPortal, SpawnRotationPortal);
+			SpawnFirstTimePortalBlue = false;
+		}
 	}
 	if (IsBlueProjectile == false)
 	{
-		if (Portals_Reference)
+		if (Portal_Reference_Orange)
 		{
-			Portals_Reference->IsOrange(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
+			Portal_Reference_Orange->Change_Location(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 		}
+		if (SpawnFirstTimePortalOrange)
+		{
+			UWorld* const World = GetWorld();
+			Portal_Reference_Orange = World->SpawnActor<AGE_II_Project_1Portal>(Portal_Orange, SpawnLocationPortal, SpawnRotationPortal);
+			SpawnFirstTimePortalOrange = false;
+		}
+	}
+	if (!SpawnFirstTimePortalBlue && !SpawnFirstTimePortalOrange && !portalsAreLinked)
+	{
+		Portal_Reference_Blue->Link(Portal_Reference_Orange);
+		Portal_Reference_Orange->Link(Portal_Reference_Blue);
+		portalsAreLinked = true;
 	}
 }

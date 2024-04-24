@@ -49,9 +49,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<AGE_II_Project_1Character*> players;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	bool oi;
-
 	UFUNCTION(BlueprintCallable)
 	void Check_if_Player_Should_Teleport(AGE_II_Project_1Character* playerInArray);
 
@@ -62,5 +59,11 @@ public:
 	void OnBeginOverlapPortal(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 	void OnEndOverlapPortal(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void Change_Location(FRotator RotationPortal, FVector LocationPortal);
+
+	UFUNCTION()
+	void Link(AGE_II_Project_1Portal* PortalToLinked_Portal);
 
 };
