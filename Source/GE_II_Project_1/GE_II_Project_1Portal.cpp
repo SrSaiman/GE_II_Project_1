@@ -4,6 +4,7 @@
 #include "GE_II_Project_1Portal.h"
 
 #include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "GE_II_Project_1Character.h"
 #include "Math/Vector.h"
@@ -11,6 +12,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 
 // Sets default values
 AGE_II_Project_1Portal::AGE_II_Project_1Portal()
@@ -28,10 +30,21 @@ AGE_II_Project_1Portal::AGE_II_Project_1Portal()
 	Camera_Portal = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("Camera_Portal"));
 	Portal_Mesh_Border = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Portal_Mesh_Border"));
 
+	Dummy_Portal = CreateDefaultSubobject<USceneComponent>(TEXT("Dummy_Portal"));
+	Left_Portal = CreateDefaultSubobject<USceneComponent>(TEXT("Left_Portal"));
+	Right_Portal = CreateDefaultSubobject<USceneComponent>(TEXT("Right_Portal"));
+	Up_Portal = CreateDefaultSubobject<USceneComponent>(TEXT("Up_Portal"));
+	Down_Portal = CreateDefaultSubobject<USceneComponent>(TEXT("Down_Portal"));
+
 	Portal_Mesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 90.0f));
 	Portal_Mesh->SetRelativeScale3D(FVector(2, 2, 2));
 	Portal_Mesh_Border->SetRelativeScale3D(FVector(2, 2, 2));
 	Portal_Scene->SetRelativeRotation(FRotator(0.0f, -180.0f, 0.0f));
+
+	Left_Portal->SetRelativeRotation(FRotator(0.0f, -180.0f, 0.0f));
+	Right_Portal->SetRelativeRotation(FRotator(0.0f, -180.0f, 0.0f));
+	Up_Portal->SetRelativeRotation(FRotator(0.0f, -180.0f, 0.0f));
+	Down_Portal->SetRelativeRotation(FRotator(0.0f, -180.0f, 0.0f));
 
 	RootComponent = Portal;
 
@@ -39,6 +52,16 @@ AGE_II_Project_1Portal::AGE_II_Project_1Portal()
 	Portal_Mesh->AttachToComponent(Portal, FAttachmentTransformRules::KeepRelativeTransform);
 	Camera_Portal->AttachToComponent(Portal, FAttachmentTransformRules::KeepRelativeTransform);
 	Portal_Mesh_Border->AttachToComponent(Portal, FAttachmentTransformRules::KeepRelativeTransform);
+	Dummy_Portal->AttachToComponent(Portal, FAttachmentTransformRules::KeepRelativeTransform);
+	Left_Portal->AttachToComponent(Dummy_Portal, FAttachmentTransformRules::KeepRelativeTransform);
+	Right_Portal->AttachToComponent(Dummy_Portal, FAttachmentTransformRules::KeepRelativeTransform);
+	Up_Portal->AttachToComponent(Dummy_Portal, FAttachmentTransformRules::KeepRelativeTransform);
+	Down_Portal->AttachToComponent(Dummy_Portal, FAttachmentTransformRules::KeepRelativeTransform);
+
+	Left_Portal->SetRelativeLocation(FVector(25.0f, 90.0f, 0.0f));
+	Right_Portal->SetRelativeLocation(FVector(25.0f, -90.0f, 0.0f));
+	Up_Portal->SetRelativeLocation(FVector(25.0f, 0.0f, 120.0f));
+	Down_Portal->SetRelativeLocation(FVector(25.0f, -0.0f, -120.0f));
 
 	Camera_Portal->bOverride_CustomNearClippingPlane = true;
 }
@@ -54,6 +77,8 @@ void AGE_II_Project_1Portal::BeginPlay()
 
 	Portal_Mesh->OnComponentBeginOverlap.AddDynamic(this, &AGE_II_Project_1Portal::OnBeginOverlapPortal);
 	Portal_Mesh->OnComponentEndOverlap.AddDynamic(this, &AGE_II_Project_1Portal::OnEndOverlapPortal);
+
+	Camera_Portal->TextureTarget->ResizeTarget(GEngine->GameViewport->Viewport->GetSizeXY().X, GEngine->GameViewport->Viewport->GetSizeXY().Y);
 }
 
 // Called every frame
@@ -175,6 +200,12 @@ void AGE_II_Project_1Portal::OnBeginOverlapPortal(UPrimitiveComponent* Overlappe
 	}
 }
 
+void AGE_II_Project_1Portal::Place_Dummy_Portal(FRotator DummyRotationPortal, FVector DummyLocationPortal)
+{
+	Dummy_Portal->SetWorldLocationAndRotation(DummyLocationPortal, DummyRotationPortal);
+	Move_Dummy_Portal();
+}
+
 void AGE_II_Project_1Portal::Change_Location(FRotator RotationPortal, FVector LocationPortal)
 {
 	SetActorLocationAndRotation(LocationPortal, RotationPortal);
@@ -183,4 +214,46 @@ void AGE_II_Project_1Portal::Change_Location(FRotator RotationPortal, FVector Lo
 void AGE_II_Project_1Portal::Link(AGE_II_Project_1Portal* PortalToLinked_Portal)
 {
 	Linked_Portal = PortalToLinked_Portal;
+}
+
+void AGE_II_Project_1Portal::Move_Dummy_Portal()
+{
+	FHitResult HitResult;
+	if(GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+	{
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+		{
+			if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+			{
+				if (GetWorld()->LineTraceSingleByChannel(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+				{
+					Change_Location(FRotator(Dummy_Portal->GetComponentRotation()), FVector(Dummy_Portal->GetComponentLocation()));
+				}
+				else
+				{
+					Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * 10);
+					DrawDebugLine(GetWorld(), Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+					Move_Dummy_Portal();
+				}
+			}
+			else
+			{
+				Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * -10);
+				DrawDebugLine(GetWorld(), Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+				Move_Dummy_Portal();
+			}
+		}
+		else
+		{
+			Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * 10);
+			DrawDebugLine(GetWorld(), Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+			Move_Dummy_Portal();
+		}
+	}
+	else
+	{
+		Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * -10);
+		DrawDebugLine(GetWorld(), Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+		Move_Dummy_Portal();
+	}
 }

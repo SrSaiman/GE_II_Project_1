@@ -49,6 +49,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<AGE_II_Project_1Character*> players;
 
+	//dummy portal 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* Dummy_Portal;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* Left_Portal;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* Right_Portal;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* Up_Portal;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* Down_Portal;
+
 	UFUNCTION(BlueprintCallable)
 	void Check_if_Player_Should_Teleport(AGE_II_Project_1Character* playerInArray);
 
@@ -62,6 +74,12 @@ public:
 
 	UFUNCTION()
 	void Change_Location(FRotator RotationPortal, FVector LocationPortal);
+
+	UFUNCTION()
+	void Place_Dummy_Portal(FRotator DummyRotationPortal, FVector DummyLocationPortal);
+
+	UFUNCTION()
+	void Move_Dummy_Portal();
 
 	UFUNCTION()
 	void Link(AGE_II_Project_1Portal* PortalToLinked_Portal);

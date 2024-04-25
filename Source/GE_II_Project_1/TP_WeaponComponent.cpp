@@ -177,28 +177,32 @@ void UTP_WeaponComponent::SpawnPortal(bool IsBlueProjectile, FRotator SpawnRotat
 {
 	if (IsBlueProjectile)
 	{
-		if (Portal_Reference_Blue)
-		{
-			Portal_Reference_Blue->Change_Location(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
-		}
 		if (SpawnFirstTimePortalBlue)
 		{
 			UWorld* const World = GetWorld();
 			Portal_Reference_Blue = World->SpawnActor<AGE_II_Project_1Portal>(Portal_Blue, SpawnLocationPortal, SpawnRotationPortal);
+
+			Portal_Reference_Blue->Place_Dummy_Portal(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 			SpawnFirstTimePortalBlue = false;
+		}
+		if (Portal_Reference_Blue)
+		{
+			Portal_Reference_Blue->Place_Dummy_Portal(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 		}
 	}
 	if (IsBlueProjectile == false)
 	{
-		if (Portal_Reference_Orange)
-		{
-			Portal_Reference_Orange->Change_Location(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
-		}
 		if (SpawnFirstTimePortalOrange)
 		{
 			UWorld* const World = GetWorld();
 			Portal_Reference_Orange = World->SpawnActor<AGE_II_Project_1Portal>(Portal_Orange, SpawnLocationPortal, SpawnRotationPortal);
+
+			Portal_Reference_Orange->Place_Dummy_Portal(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 			SpawnFirstTimePortalOrange = false;
+		}
+		if (Portal_Reference_Orange)
+		{
+			Portal_Reference_Orange->Place_Dummy_Portal(FRotator(SpawnRotationPortal), FVector(SpawnLocationPortal));
 		}
 	}
 	if (!SpawnFirstTimePortalBlue && !SpawnFirstTimePortalOrange && !portalsAreLinked)
