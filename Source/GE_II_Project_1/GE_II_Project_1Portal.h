@@ -83,4 +83,9 @@ public:
 
 	UFUNCTION()
 	void Link(AGE_II_Project_1Portal* PortalToLinked_Portal);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+
+	FCollisionQueryParams TraceParams;
 };

@@ -14,6 +14,8 @@
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 
+#define COLLISION_VIEWABLE ECC_GameTraceChannel4
+
 // Sets default values
 AGE_II_Project_1Portal::AGE_II_Project_1Portal()
 {
@@ -64,6 +66,10 @@ AGE_II_Project_1Portal::AGE_II_Project_1Portal()
 	Down_Portal->SetRelativeLocation(FVector(25.0f, -0.0f, -120.0f));
 
 	Camera_Portal->bOverride_CustomNearClippingPlane = true;
+
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel4));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 }
 
 // Called when the game starts or when spawned
@@ -207,13 +213,13 @@ void AGE_II_Project_1Portal::Link(AGE_II_Project_1Portal* PortalToLinked_Portal)
 void AGE_II_Project_1Portal::Move_Dummy_Portal()
 {
 	FHitResult HitResult;
-	if(GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 	{
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 		{
-			if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+			if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 			{
-				if (GetWorld()->LineTraceSingleByChannel(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2))
+				if (GetWorld()->LineTraceSingleByChannel(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 				{
 					Change_Location(FRotator(Dummy_Portal->GetComponentRotation()), FVector(Dummy_Portal->GetComponentLocation()));
 				}
@@ -221,7 +227,10 @@ void AGE_II_Project_1Portal::Move_Dummy_Portal()
 				{
 					Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * 10);
 					DrawDebugLine(GetWorld(), Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
-					Move_Dummy_Portal();
+					if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+					{
+						Move_Dummy_Portal();
+					}
 				}
 			}
 			else
@@ -235,7 +244,10 @@ void AGE_II_Project_1Portal::Move_Dummy_Portal()
 		{
 			Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * 10);
 			DrawDebugLine(GetWorld(), Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
-			Move_Dummy_Portal();
+			if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+			{
+				Move_Dummy_Portal();
+			}
 		}
 	}
 	else

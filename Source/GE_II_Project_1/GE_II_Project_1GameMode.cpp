@@ -12,18 +12,18 @@ AGE_II_Project_1GameMode::AGE_II_Project_1GameMode()
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
-	//static ConstructorHelpers::FClassFinder<UUserWidget> UI(TEXT("/Game/FirstPerson/Blueprints/UI_Cross"));
-	//if (UI.Class != NULL)
-	//{
-	//	HUDWidgetClass = UI.Class;
-	//}
+	static ConstructorHelpers::FClassFinder<UUserWidget> UI(TEXT("/Game/FirstPerson/Blueprints/UI_Cross"));
+	if (UI.Class != NULL)
+	{
+		HUDWidgetClass = UI.Class;
+	}
 
-	//if (HUDWidgetClass != nullptr)
-	//{
-	//	CurrentWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
-	//	if (CurrentWidget != nullptr)
-	//	{
-	//		CurrentWidget->AddToViewport();
-	//	}
-	//}
+	if (HUDWidgetClass != nullptr)
+	{
+		CurrentWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
+		if (CurrentWidget != nullptr)
+		{
+			CurrentWidget->AddToViewport();
+		}
+	}
 }
