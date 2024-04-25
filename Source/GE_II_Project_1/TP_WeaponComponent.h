@@ -15,6 +15,10 @@ class GE_II_PROJECT_1_API UTP_WeaponComponent : public USkeletalMeshComponent
 	GENERATED_BODY()
 
 public:
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction);
+
+public:
 
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AGE_II_Project_1Projectile> ProjectileBlue;
@@ -74,9 +78,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void FireRight();
 
+	
 	UFUNCTION()
 	void SpawnPortal(bool IsOrangeProjetile, FRotator SpawnRotationPortal, FVector SpawnLocationPortal);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 
 protected:
 	/** Ends gameplay for this component. */
@@ -94,7 +101,18 @@ protected:
 
 	bool portalsAreLinked = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool can_Shoot = false;
+
 private:
 	/** The Character holding this weapon*/
 	AGE_II_Project_1Character* Character;
+	APlayerController* PlayerControllerThis;
+	FActorSpawnParameters ActorSpawnParams;
+	FRotator SpawnRotation;
+	FVector SpawnLocation;
+	FVector EndLocation;
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParams;
+	bool havePlayerController = false;
 };

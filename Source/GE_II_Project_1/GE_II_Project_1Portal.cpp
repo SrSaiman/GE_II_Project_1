@@ -149,18 +149,11 @@ void AGE_II_Project_1Portal::OnEndOverlapPortal(UPrimitiveComponent* OverlappedC
 {
 	if (Linked_Portal)
 	{
-		if (OtherActor->IsA<AGE_II_Project_1Character>())
-		{
 			if (AGE_II_Project_1Character* PlayerCharacter = Cast<AGE_II_Project_1Character>(OtherActor))
 			{
 				if (PlayerCharacter)
 				{
 					UCapsuleComponent* CapsuleComponent = PlayerCharacter->GetCapsuleComponent();
-
-					if (CapsuleComponent)
-					{
-						CapsuleComponent->SetCollisionProfileName("Pawn");
-					}
 
 					// Verifique se o array players não está vazio antes de tentar acessá-lo
 					if (players.Num() > 0)
@@ -173,7 +166,6 @@ void AGE_II_Project_1Portal::OnEndOverlapPortal(UPrimitiveComponent* OverlappedC
 					}
 				}
 			}
-		}
 	}
 }
 
@@ -190,10 +182,6 @@ void AGE_II_Project_1Portal::OnBeginOverlapPortal(UPrimitiveComponent* Overlappe
 				{
 					UCapsuleComponent* CapsuleComponent = PlayerCharacter->GetCapsuleComponent();
 
-					if (CapsuleComponent)
-					{
-						CapsuleComponent->SetCollisionProfileName("PortalPawn");
-					}
 				}
 			}
 		}

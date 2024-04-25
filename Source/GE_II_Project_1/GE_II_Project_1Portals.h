@@ -6,8 +6,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
-#include "UObject/NoExportTypes.h"
-#include "Components/TimelineComponent.h"
 #include "GE_II_Project_1Portals.generated.h"
 
 UCLASS()
@@ -93,8 +91,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	APlayerCameraManager* PlayerCamera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	bool oi;
 
 
 

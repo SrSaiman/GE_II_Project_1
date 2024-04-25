@@ -1,6 +1,5 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-
 #include "TP_WeaponComponent.h"
 #include "GE_II_Project_1Character.h"
 #include "GE_II_Project_1Projectile.h"
@@ -11,12 +10,15 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GE_II_Project_1Portal.h"
+#include "Engine/EngineTypes.h"
 
-#define COLLISION_VIEWABLE ECC_GameTraceChannel2
+#define COLLISION_VIEWABLE ECC_GameTraceChannel4
 
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
 {
+	PrimaryComponentTick.bCanEverTick = true;
+
 	// Default offset from the character location for projectiles to spawn
 	MuzzleOffset = FVector(100.0f, 0.0f, 10.0f);
 
@@ -42,6 +44,48 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 	{
 		Portal_Orange = Portals_Orange_.Class;
 	}
+
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel4));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+
+	TraceParams.AddIgnoredActor(Character);
+}
+
+// Implementação da função TickComponent
+void UTP_WeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (Character == nullptr || Character->GetController() == nullptr)
+	{
+		return;
+	}
+	if (!havePlayerController)
+	{
+		// Get the player controller associated with the character
+		APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
+		PlayerControllerThis = PlayerController;
+	}	
+	if (PlayerControllerThis != nullptr)
+	{
+		// Get the player controller associated with the character
+		SpawnRotation = PlayerControllerThis->PlayerCameraManager->GetCameraRotation();
+	}
+	SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+	EndLocation = SpawnLocation + SpawnRotation.Vector() * 5000;
+	DrawDebugLine(GetWorld(), SpawnLocation, EndLocation, FColor::Red, true, 5.f, 0, 1.0f);
+	if(GetWorld()->LineTraceSingleByObjectType(HitResult, SpawnLocation, EndLocation, FCollisionObjectQueryParams(ObjectTypes), TraceParams))
+	{
+		if (HitResult.GetActor()->GetRootComponent()->GetCollisionObjectType() == ECC_GameTraceChannel4)
+		{
+			can_Shoot = true;
+		}
+		if (HitResult.GetActor()->GetRootComponent()->GetCollisionObjectType() == ECC_WorldStatic || HitResult.GetActor()->GetRootComponent()->GetCollisionObjectType() == ECC_WorldDynamic)
+		{
+			can_Shoot = false;
+		}
+	}
 }
 
 void UTP_WeaponComponent::FireLeft()
@@ -58,66 +102,45 @@ void UTP_WeaponComponent::FireRight()
 
 void UTP_WeaponComponent::Fire()
 {
-		if (Character == nullptr || Character->GetController() == nullptr)
-		{
-			return;
-		}
-
+	if (can_Shoot)
+	{
 		// Try and fire a projectile
 		if (ProjectileOrange != nullptr && ProjectileBlue != nullptr)
 		{
 			UWorld* const World = GetWorld();
 			if (World != nullptr)
 			{
-				APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
-				const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
-				// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-				const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
-
 				//Set Spawn Collision Handling Override
-				FActorSpawnParameters ActorSpawnParams;
-
-				FHitResult HitResult;
-				FCollisionQueryParams TraceParams(FName(TEXT("Trace")), true, GetOwner());
-				FVector EndLocation = SpawnLocation + SpawnRotation.Vector() * 5000;;
-
-					if (GetWorld()->LineTraceSingleByChannel(HitResult, SpawnLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel2, TraceParams))
-					{
-
-						ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-
-						DrawDebugLine(GetWorld(), SpawnLocation, EndLocation, FColor::Red, true, 5.f, 0, 1.0f);
-
-						if (IsLeftProjectile)
-						{
-							AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileBlue, SpawnLocation, SpawnRotation, ActorSpawnParams);
-							BULLET->GetGun(IsLeftProjectile, this);
-						}
-						if (IsLeftProjectile == false)
-						{
-							AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
-							BULLET->GetGun(IsLeftProjectile, this);
-						}
+				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+				DrawDebugLine(GetWorld(), SpawnLocation, EndLocation, FColor::Red, true, 5.f, 0, 1.0f);
+				if (IsLeftProjectile)
+				{
+					AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileBlue, SpawnLocation, SpawnRotation, ActorSpawnParams);
+					BULLET->GetGun(IsLeftProjectile, this);
+				}
+				if (IsLeftProjectile == false)
+				{
+					AGE_II_Project_1Projectile* BULLET = World->SpawnActor<AGE_II_Project_1Projectile>(ProjectileOrange, SpawnLocation, SpawnRotation, ActorSpawnParams);
+					BULLET->GetGun(IsLeftProjectile, this);
 				}
 
+			}
 		}
-	}
-	
-	// Try and play the sound if specified
-	if (FireSound != nullptr)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
-	}
-	
-	// Try and play a firing animation if specified
-	if (FireAnimation != nullptr)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
-		if (AnimInstance != nullptr)
+		// Try and play the sound if specified
+		if (FireSound != nullptr)
 		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
+			UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+		}
+
+		// Try and play a firing animation if specified
+		if (FireAnimation != nullptr)
+		{
+			// Get the animation object for the arms mesh
+			UAnimInstance* AnimInstance = Character->GetMesh1P()->GetAnimInstance();
+			if (AnimInstance != nullptr)
+			{
+				AnimInstance->Montage_Play(FireAnimation, 1.f);
+			}
 		}
 	}
 }
@@ -150,11 +173,12 @@ void UTP_WeaponComponent::AttachWeapon(AGE_II_Project_1Character* TargetCharacte
 
 		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerController->InputComponent))
 		{
-			// Fire
+				// Fire
 				EnhancedInputComponent->BindAction(FireActionLeft, ETriggerEvent::Triggered, this, &UTP_WeaponComponent::FireLeft);
 				EnhancedInputComponent->BindAction(FireActionRight, ETriggerEvent::Triggered, this, &UTP_WeaponComponent::FireRight);
+			}
 		}
-	}
+
 }
 
 void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

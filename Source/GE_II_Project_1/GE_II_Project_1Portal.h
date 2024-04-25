@@ -83,5 +83,4 @@ public:
 
 	UFUNCTION()
 	void Link(AGE_II_Project_1Portal* PortalToLinked_Portal);
-
 };

@@ -46,9 +46,7 @@ void AGE_II_Project_1Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* Oth
 	FVector ImpactNormalPortal = Hit.ImpactNormal;
 	FRotator SpawnRotationPortal_ = ImpactNormalPortal.Rotation();
 	FVector SpawnLocationPortal_ = Hit.ImpactPoint + (Hit.ImpactNormal * FVector(0.01f, 0.01f, 0.01f));
-		Weapon->SpawnPortal(BlueProjectile, SpawnRotationPortal_, SpawnLocationPortal_);
-		UE_LOG(LogTemp, Warning, TEXT("Weapon não foi inicializado corretamente."));
-
+	Weapon->SpawnPortal(BlueProjectile, SpawnRotationPortal_, SpawnLocationPortal_);
 	Destroy();
 }
 
