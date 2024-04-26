@@ -85,6 +85,9 @@ void AGE_II_Project_1Portal::BeginPlay()
 	Portal_Mesh->OnComponentEndOverlap.AddDynamic(this, &AGE_II_Project_1Portal::OnEndOverlapPortal);
 
 	Camera_Portal->TextureTarget->ResizeTarget(GEngine->GameViewport->Viewport->GetSizeXY().X, GEngine->GameViewport->Viewport->GetSizeXY().Y);
+
+	Portal_Mesh->SetVisibility(false);
+	Portal_Mesh_Border->SetVisibility(false);
 }
 
 // Called every frame
@@ -202,6 +205,8 @@ void AGE_II_Project_1Portal::Place_Dummy_Portal(FRotator DummyRotationPortal, FV
 
 void AGE_II_Project_1Portal::Change_Location(FRotator RotationPortal, FVector LocationPortal)
 {
+	Portal_Mesh->SetVisibility(true);
+	Portal_Mesh_Border->SetVisibility(true);
 	SetActorLocationAndRotation(LocationPortal, RotationPortal);
 }
 
