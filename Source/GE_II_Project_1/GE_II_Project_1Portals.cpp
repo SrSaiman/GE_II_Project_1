@@ -82,32 +82,7 @@ void AGE_II_Project_1Portals::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Check if World is valid before accessing it
-	if (UWorld* World = GetWorld())
-	{
-		// Check if PlayerController is valid before accessing it
-		APlayerController* PlayerController = World->GetFirstPlayerController();
-		if (PlayerController)
-		{
-			// Check if PlayerCameraManager is valid before accessing it
-			PlayerCamera = PlayerController->PlayerCameraManager;
-			if (!PlayerCamera)
-			{
-				// Log a warning if PlayerCameraManager is null
-				UE_LOG(LogTemp, Warning, TEXT("PlayerCameraManager is nullptr"));
-			}
-		}
-		else
-		{
-			// Log a warning if PlayerController is null
-			UE_LOG(LogTemp, Warning, TEXT("PlayerController is nullptr"));
-		}
-	}
-	else
-	{
-		// Log a warning if World is null
-		UE_LOG(LogTemp, Warning, TEXT("World is nullptr"));
-	}
+
 }
 
 // Called every frame

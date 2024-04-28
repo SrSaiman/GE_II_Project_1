@@ -57,6 +57,12 @@ void UTP_WeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	CheckIfCanShoot();
+}
+
+void UTP_WeaponComponent::CheckIfCanShoot()
+{
+
 	if (Character == nullptr || Character->GetController() == nullptr)
 	{
 		return;
@@ -66,16 +72,16 @@ void UTP_WeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 		// Get the player controller associated with the character
 		APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
 		PlayerControllerThis = PlayerController;
-	}	
+	}
 	if (PlayerControllerThis != nullptr)
 	{
 		// Get the player controller associated with the character
 		SpawnRotation = PlayerControllerThis->PlayerCameraManager->GetCameraRotation();
 	}
-	SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+	SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset) + SpawnLocation.UpVector * 50;
 	EndLocation = SpawnLocation + SpawnRotation.Vector() * 5000;
 
-	if(GetWorld()->LineTraceSingleByObjectType(HitResult, SpawnLocation, EndLocation, FCollisionObjectQueryParams(ObjectTypes), TraceParams))
+	if (GetWorld()->LineTraceSingleByObjectType(HitResult, SpawnLocation, EndLocation, FCollisionObjectQueryParams(ObjectTypes), TraceParams))
 	{
 		if (HitResult.GetActor()->GetRootComponent()->GetCollisionObjectType() == ECC_GameTraceChannel4)
 		{

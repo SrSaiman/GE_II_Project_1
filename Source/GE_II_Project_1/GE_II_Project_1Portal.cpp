@@ -12,7 +12,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/Engine.h"
+
 #include "Engine/GameViewportClient.h"
+#include "Components/PrimitiveComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 #define COLLISION_VIEWABLE ECC_GameTraceChannel4
 
@@ -70,6 +73,11 @@ AGE_II_Project_1Portal::AGE_II_Project_1Portal()
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel4));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+
+	// Define o grupo de Tick para PrePhysics e alta prioridade
+	PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
+	PrimaryActorTick.bHighPriority = true;
+
 }
 
 // Called when the game starts or when spawned
@@ -95,22 +103,61 @@ void AGE_II_Project_1Portal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Linked_Portal != nullptr)
+
+	if (Linked_Portal != nullptr && Linked_Portal->AlreadyPlaced)
 	{
-		FTransform Camera = UKismetMathLibrary::MakeRelativeTransform(FTransform(PlayerCamera->GetTransform()), FTransform(Portal_Scene->GetComponentTransform()));
+		Update_Camera();
+		Check_Distance();
 
-		Linked_Portal->Camera_Portal->SetRelativeLocationAndRotation(FVector(Camera.GetLocation()),FRotator(Camera.GetRotation()));
-
-		Linked_Portal->Camera_Portal->CustomNearClippingPlane = 1.0f+ UKismetMathLibrary::Vector_Distance(FVector(PlayerCamera->GetCameraLocation()),FVector(GetActorLocation()));
 	}
-
-	// ercorrer a lista de players usando um loop foreach
+		// ercorrer a lista de players usando um loop foreach
 	for (AGE_II_Project_1Character* PlayerCharacter : players)
 	{
 		Check_if_Player_Should_Teleport(PlayerCharacter);
 	}
 }
+void AGE_II_Project_1Portal::Update_Camera()
+{
+		FTransform Camera = UKismetMathLibrary::MakeRelativeTransform(FTransform(PlayerCamera->GetTransform()), FTransform(Portal_Scene->GetComponentTransform()));
 
+		Linked_Portal->Camera_Portal->SetRelativeLocationAndRotation(FVector(Camera.GetLocation()), FRotator(Camera.GetRotation()));
+
+		Linked_Portal->Camera_Portal->CustomNearClippingPlane = 1.0f + UKismetMathLibrary::Vector_Distance(FVector(PlayerCamera->GetCameraLocation()), FVector(GetActorLocation()));
+}
+void AGE_II_Project_1Portal::Check_Distance()
+{
+	float distancia = FVector::Distance(PlayerCamera->GetCameraLocation(), Portal_Scene->GetComponentLocation());
+	if (wallBack)
+	{
+		if (GetActorRotation().Pitch <= 0)
+		{
+			if (distancia < 100)
+			{
+				wallBack->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+				isNear = true;
+			}
+			if (distancia >= 100 && isNear)
+			{
+				wallBack->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+				isNear = false;
+			}
+		}
+		else
+		{
+			if (distancia < 200)
+			{
+				wallBack->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+				isNear = true;
+			}
+			if (distancia >= 200 && isNear)
+			{
+				wallBack->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Block);
+				isNear = false;
+			}
+		}
+
+	}
+}
 void AGE_II_Project_1Portal::Check_if_Player_Should_Teleport(AGE_II_Project_1Character* playerInArray)
 {
 	// Verifique se o jogador está no array antes de tentar removê-lo
@@ -123,10 +170,21 @@ void AGE_II_Project_1Portal::Check_if_Player_Should_Teleport(AGE_II_Project_1Cha
 
 		float secondCheck = UKismetMathLibrary::Dot_VectorVector(playerInArray->GetLastMovementInputVector().GetSafeNormal(), GetActorForwardVector());
 
-		if (firstCheck <= 0 && secondCheck < 0)
+		if (GetActorRotation().Pitch <= 0)
 		{
-			Teleport_Player(playerInArray);
+			if (firstCheck <= 0 && secondCheck < 0)
+			{
+				Teleport_Player(playerInArray);
+			}
 		}
+		else
+		{
+			if (firstCheck <= 20 && secondCheck < 20)
+			{
+				Teleport_Player(playerInArray);
+			}
+		}
+
 	}
 }
 
@@ -137,20 +195,58 @@ void AGE_II_Project_1Portal::Teleport_Player(AGE_II_Project_1Character* playerTo
 	// Verifique se o jogador está no array antes de tentar removê-lo
 	if (players.Contains(playerToTeleport))
 	{
-		FVector RelativeVelocity = UKismetMathLibrary::InverseTransformDirection(playerToTeleport->GetTransform(), playerToTeleport->GetVelocity());
-
 		FTransform ComposeTransforms = UKismetMathLibrary::ComposeTransforms(UKismetMathLibrary::MakeRelativeTransform(playerToTeleport->GetFirstPersonCameraComponent()->GetComponentTransform(), Portal_Scene->GetComponentTransform()), Linked_Portal->GetActorTransform());
 		FVector Minus = (ComposeTransforms.GetLocation() - playerToTeleport->GetFirstPersonCameraComponent()->GetRelativeLocation());
-		FVector PortalForwardVector = (Linked_Portal->GetActorForwardVector() * 10);
-		FVector newLocation = FVector(PortalForwardVector + Minus);
 
-		playerToTeleport->SetActorLocation(newLocation);
+		if (GetActorRotation().Pitch <= 1 && Linked_Portal->GetActorRotation().Pitch <= 1)
+		{
+			FVector RelativeVelocity = UKismetMathLibrary::InverseTransformDirection(playerToTeleport->GetTransform(), playerToTeleport->GetVelocity());
+			FVector PortalForwardVector = (Linked_Portal->GetActorForwardVector() * 10);
+			FVector newLocation = FVector(PortalForwardVector + Minus);
+			playerToTeleport->SetActorLocation(newLocation);
+			FRotator Rotator(ComposeTransforms.Rotator().Pitch, ComposeTransforms.Rotator().Yaw, 0);
+			playerToTeleport->GetController()->SetControlRotation(Rotator);
 
-		FRotator Rotator(0.0f, ComposeTransforms.Rotator().Yaw, ComposeTransforms.Rotator().Roll);
-		playerToTeleport->GetController()->SetControlRotation(Rotator);
+			playerToTeleport->GetCharacterMovement()->Velocity = (UKismetMathLibrary::TransformDirection(UKismetMathLibrary::MakeTransform(playerToTeleport->GetActorLocation(), playerToTeleport->GetControlRotation()), RelativeVelocity));
+		}
+		else
+		{
+			if (GetActorRotation().Pitch > 1 && Linked_Portal->GetActorRotation().Pitch <= 1)
+			{
+				FVector RelativeVelocity = playerToTeleport->GetVelocity();
+				FVector PortalForwardVector = (Linked_Portal->GetActorForwardVector() * 170);
+				FVector newLocation = FVector(PortalForwardVector + Minus);
+				playerToTeleport->SetActorLocation(newLocation);
+				FRotator Rotator(ComposeTransforms.Rotator().Pitch, ComposeTransforms.Rotator().Yaw, 0);
+				playerToTeleport->GetController()->SetControlRotation(Rotator);
 
+				playerToTeleport->GetCharacterMovement()->Velocity = Linked_Portal->GetActorForwardVector() * RelativeVelocity.Size();
+			}
+			else
+			{
+				if (GetActorRotation().Pitch <= 1 && Linked_Portal->GetActorRotation().Pitch > 1)
+				{
+					FVector RelativeVelocity = UKismetMathLibrary::InverseTransformDirection(playerToTeleport->GetTransform(), playerToTeleport->GetVelocity());
+					FVector PortalForwardVector = (Linked_Portal->GetActorForwardVector() * 100);
+					FVector newLocation = FVector(PortalForwardVector + Minus);
+					playerToTeleport->SetActorLocation(newLocation);
+					FRotator Rotator(ComposeTransforms.Rotator().Pitch, ComposeTransforms.Rotator().Yaw, 0);
+					playerToTeleport->GetController()->SetControlRotation(Rotator);
 
-		playerToTeleport->GetCharacterMovement()->Velocity = (UKismetMathLibrary::TransformDirection(UKismetMathLibrary::MakeTransform(playerToTeleport->GetActorLocation(), playerToTeleport->GetControlRotation()), RelativeVelocity));
+					playerToTeleport->GetCharacterMovement()->Velocity = (UKismetMathLibrary::TransformDirection(UKismetMathLibrary::MakeTransform(playerToTeleport->GetActorLocation(), playerToTeleport->GetControlRotation()), RelativeVelocity ));
+				}
+				if (GetActorRotation().Pitch > 1 && Linked_Portal->GetActorRotation().Pitch > 1)
+				{
+
+					FVector RelativeVelocity = playerToTeleport->GetVelocity();
+					FVector PortalForwardVector = (Linked_Portal->GetActorForwardVector() * 170);
+					FVector newLocation = FVector(PortalForwardVector + Minus);
+					playerToTeleport->SetActorLocation(newLocation);
+
+					playerToTeleport->GetCharacterMovement()->Velocity = GetActorForwardVector() * RelativeVelocity.Size() * 0.90;
+				}
+			}
+		}
 	}
 }
 
@@ -162,8 +258,6 @@ void AGE_II_Project_1Portal::OnEndOverlapPortal(UPrimitiveComponent* OverlappedC
 			{
 				if (PlayerCharacter)
 				{
-					UCapsuleComponent* CapsuleComponent = PlayerCharacter->GetCapsuleComponent();
-
 					// Verifique se o array players não está vazio antes de tentar acessá-lo
 					if (players.Num() > 0)
 					{
@@ -187,11 +281,6 @@ void AGE_II_Project_1Portal::OnBeginOverlapPortal(UPrimitiveComponent* Overlappe
 			if (AGE_II_Project_1Character* PlayerCharacter = Cast<AGE_II_Project_1Character>(OtherActor))
 			{
 				players.AddUnique(PlayerCharacter);
-				if (players.IndexOfByKey(PlayerCharacter) != -1)
-				{
-					UCapsuleComponent* CapsuleComponent = PlayerCharacter->GetCapsuleComponent();
-
-				}
 			}
 		}
 	}
@@ -208,6 +297,13 @@ void AGE_II_Project_1Portal::Change_Location(FRotator RotationPortal, FVector Lo
 	Portal_Mesh->SetVisibility(true);
 	Portal_Mesh_Border->SetVisibility(true);
 	SetActorLocationAndRotation(LocationPortal, RotationPortal);
+	FHitResult HitResult;
+	if (GetWorld()->LineTraceSingleByObjectType(HitResult, Portal_Scene->GetComponentLocation() + Portal_Scene->GetForwardVector() * -10, (Portal_Scene->GetForwardVector() * 50) + Portal_Scene->GetComponentLocation(), FCollisionObjectQueryParams(ECC_GameTraceChannel4), TraceParams))
+	{
+		DrawDebugLine(GetWorld(), Portal_Scene->GetComponentLocation() + Portal_Scene->GetForwardVector() * -10, (Portal_Scene->GetForwardVector() * 50) + Portal_Scene->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+		wallBack = HitResult.GetActor()->FindComponentByClass<UStaticMeshComponent>();
+	}
+	AlreadyPlaced = true;
 }
 
 void AGE_II_Project_1Portal::Link(AGE_II_Project_1Portal* PortalToLinked_Portal)
@@ -218,47 +314,55 @@ void AGE_II_Project_1Portal::Link(AGE_II_Project_1Portal* PortalToLinked_Portal)
 void AGE_II_Project_1Portal::Move_Dummy_Portal()
 {
 	FHitResult HitResult;
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams)||
+		GetWorld()->LineTraceSingleByChannel(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams)||
+		GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams)||
+		GetWorld()->LineTraceSingleByChannel(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 	{
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 		{
-			if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+			if (GetWorld()->LineTraceSingleByChannel(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 			{
-				if (GetWorld()->LineTraceSingleByChannel(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+				if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
 				{
-					Change_Location(FRotator(Dummy_Portal->GetComponentRotation()), FVector(Dummy_Portal->GetComponentLocation()));
+					if (GetWorld()->LineTraceSingleByChannel(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+					{
+						Change_Location(FRotator(Dummy_Portal->GetComponentRotation()), FVector(Dummy_Portal->GetComponentLocation()));
+					}
+					else
+					{
+						Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * 10);
+						DrawDebugLine(GetWorld(), Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+						if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+						{
+							Move_Dummy_Portal();
+						}
+					}
 				}
 				else
 				{
-					Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * 10);
-					DrawDebugLine(GetWorld(), Down_Portal->GetComponentLocation(), (Down_Portal->GetForwardVector() * 50) + Down_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
-					if (GetWorld()->LineTraceSingleByChannel(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
-					{
-						Move_Dummy_Portal();
-					}
+					Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * -10);
+					DrawDebugLine(GetWorld(), Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+					Move_Dummy_Portal();
 				}
 			}
 			else
 			{
-				Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetUpVector() * -10);
-				DrawDebugLine(GetWorld(), Up_Portal->GetComponentLocation(), (Up_Portal->GetForwardVector() * 50) + Up_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
-				Move_Dummy_Portal();
+				Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * 10);
+				DrawDebugLine(GetWorld(), Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+				if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
+				{
+					Move_Dummy_Portal();
+				}
 			}
 		}
 		else
 		{
-			Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * 10);
-			DrawDebugLine(GetWorld(), Right_Portal->GetComponentLocation(), (Right_Portal->GetForwardVector() * 50) + Right_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
-			if (GetWorld()->LineTraceSingleByChannel(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), ECollisionChannel::ECC_GameTraceChannel2) && !GetWorld()->LineTraceSingleByObjectType(HitResult, Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams))
-			{
-				Move_Dummy_Portal();
-			}
+			Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * -10);
+			DrawDebugLine(GetWorld(), Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
+			Move_Dummy_Portal();
 		}
-	}
-	else
-	{
-		Dummy_Portal->SetWorldLocation(Dummy_Portal->GetComponentLocation() + Dummy_Portal->GetRightVector() * -10);
-		DrawDebugLine(GetWorld(), Left_Portal->GetComponentLocation(), (Left_Portal->GetForwardVector() * 50) + Left_Portal->GetComponentLocation(), FColor::Red, true, 5.f, 0, 1.0f);
-		Move_Dummy_Portal();
 	}
 }

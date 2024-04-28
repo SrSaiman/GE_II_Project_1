@@ -43,11 +43,18 @@ AGE_II_Project_1Projectile::AGE_II_Project_1Projectile()
 
 void AGE_II_Project_1Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	FVector ImpactNormalPortal = Hit.ImpactNormal;
-	FRotator SpawnRotationPortal_ = ImpactNormalPortal.Rotation();
-	FVector SpawnLocationPortal_ = Hit.ImpactPoint + (Hit.ImpactNormal * FVector(0.01f, 0.01f, 0.01f));
-	Weapon->SpawnPortal(BlueProjectile, SpawnRotationPortal_, SpawnLocationPortal_);
-	Destroy();
+	if (Hit.GetActor()->GetRootComponent()->GetCollisionObjectType() == ECC_GameTraceChannel4)
+	{
+		FVector ImpactNormalPortal = Hit.ImpactNormal;
+		FRotator SpawnRotationPortal_ = ImpactNormalPortal.Rotation();
+		FVector SpawnLocationPortal_ = Hit.ImpactPoint + (Hit.ImpactNormal * FVector(0.01f, 0.01f, 0.01f));
+		Weapon->SpawnPortal(BlueProjectile, SpawnRotationPortal_, SpawnLocationPortal_);
+		Destroy();
+	}
+	else
+	{
+		Destroy();
+	}
 }
 
 void AGE_II_Project_1Projectile::GetGun(bool IsBlueProjectile, UTP_WeaponComponent* gunReference)

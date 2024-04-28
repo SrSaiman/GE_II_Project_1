@@ -78,7 +78,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void FireRight();
 
-	
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void CheckIfCanShoot();
+
 	UFUNCTION()
 	void SpawnPortal(bool IsOrangeProjetile, FRotator SpawnRotationPortal, FVector SpawnLocationPortal);
 

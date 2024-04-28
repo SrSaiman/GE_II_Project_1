@@ -121,13 +121,3 @@ bool AGE_II_Project_1Character::GetHasRifle()
 {
 	return bHasRifle;
 }
-
-void AGE_II_Project_1Character::JumpPortal_Implementation(FVector Target_Location, FRotator TargetRotation)
-{
-	Jump_Velocity = UKismetMathLibrary::VSize(FVector(GetVelocity()));
-	SetActorLocationAndRotation(FVector (Target_Location), FRotator(TargetRotation));
-	GetController()->SetControlRotation(FRotator(TargetRotation));
-	GetCharacterMovement()->Velocity = GetActorForwardVector()*Jump_Velocity;
-	SetActorRotation(FRotator(0.f, GetActorRotation().Yaw, 0.f));
-
-}

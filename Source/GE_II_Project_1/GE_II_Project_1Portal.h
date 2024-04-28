@@ -82,10 +82,26 @@ public:
 	void Move_Dummy_Portal();
 
 	UFUNCTION()
+	void Check_Distance();
+
+	UFUNCTION()
+	void Update_Camera();
+
+	UFUNCTION()
+	void LinkedOnLevel();
+
+	UFUNCTION()
 	void Link(AGE_II_Project_1Portal* PortalToLinked_Portal);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 
 	FCollisionQueryParams TraceParams;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* wallBack;
+
+	bool AlreadyPlaced = false;
+
+	bool isNear;
 };

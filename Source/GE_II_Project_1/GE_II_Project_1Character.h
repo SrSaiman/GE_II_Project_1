@@ -66,10 +66,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	bool GetHasRifle();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	float Jump_Velocity;
-
-	void JumpPortal_Implementation(FVector Target_Location, FRotator TargetRotation) override;
 
 protected:
 	/** Called for movement input */
