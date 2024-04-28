@@ -88,9 +88,6 @@ public:
 	void Update_Camera();
 
 	UFUNCTION()
-	void LinkedOnLevel();
-
-	UFUNCTION()
 	void Link(AGE_II_Project_1Portal* PortalToLinked_Portal);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

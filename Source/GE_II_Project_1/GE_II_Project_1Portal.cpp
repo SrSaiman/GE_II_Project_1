@@ -1,4 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GE_II_Project_1Portal.h"
@@ -77,7 +78,6 @@ AGE_II_Project_1Portal::AGE_II_Project_1Portal()
 	// Define o grupo de Tick para PrePhysics e alta prioridade
 	PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 	PrimaryActorTick.bHighPriority = true;
-
 }
 
 // Called when the game starts or when spawned
